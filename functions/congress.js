@@ -1,18 +1,20 @@
 const got = require('got');
 exports.handler = async function(context, event, callback) {
   const twiml = new Twilio.twiml.MessagingResponse();
-  let inbMsg = event.Body.toLowerCase().trim();
+  const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
+  inbMsg = event.Body.toLowerCase().trim();
   if(inbMsg.includes("bill")) {
     got(`https://api.congress.gov/v3/bill?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(response => {
-      let billsLength = response.body.bills.length;
-      let randNum = Math.floor(Math.random() * (billsLength - 1)) + 1;
-      let latestActionDate = response.body.bills[randNum].latestAction.actionDate;
-      let latestActionTxt = response.body.bills[randNum].latestAction.text;
-      let title = response.body.bills[randNum].title;
-      let congress = response.body.bills[randNum].congress;
-      let type =  response.body.bills[randNum].type;
-      let num = response.body.bills[randNum].number;
-      let originChamber = response.body.bills[randNum].originChamber;
+      const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
+      billsLength = response.body.bills.length;
+      const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
+      randNum = Math.floor(Math.random() * (billsLength - 1)) + 1;
+      const latestActionTxt = response.body.bills[randNum].latestAction.text;
+      const title = response.body.bills[randNum].title;
+      const congress = response.body.bills[randNum].congress;
+      const type =  response.body.bills[randNum].type;
+      const num = response.body.bills[randNum].number;
+      const originChamber = response.body.bills[randNum].originChamber;
       const billMap = {
         HR: "house bill", 
         S: "senate bill",
@@ -23,11 +25,11 @@ exports.handler = async function(context, event, callback) {
         HRES: "house simple resolution",
         SRES: "senate simple resolution"
       };
-      let msg = `Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number: ${num}\nIt originated in the ${originChamber} but the latest action was ${latestActionTxt} on ${latestActionDate}`;
+      const msg = `Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number: ${num}\nIt originated in the ${originChamber} but the latest action was ${latestActionTxt} on ${latestActionDate}`;
     //   got(`https://api.congress.gov/v3/bill/${congress}/${type}/${num}/summaries?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(resp => {
     //     msg += resp.summaries.text;
     // });
-    twiml.message(msg);
+      twiml.message(msg);
       callback(null, twiml);
     }).catch(error => {
       twiml.message(`${error.response}`);
@@ -45,6 +47,23 @@ exports.handler = async function(context, event, callback) {
       let type =  response.body.amendments[randNum].type;
       let number = response.body.amendments[randNum].number;
       twiml.message(`Amendment purpose: ${purpose}.\nAssigned amendment or resolution number:${number}\n Latest action was on ${latestActionDate}.\n The bill was ${latestActionTxt}\n Congress: ${congress}.`);
+      callback(null, twiml);
+    });
+  }
+  else if(inbMsg.includes("summaries")) {
+    got(`https://api.congress.gov/v3/summaries/117?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(response => {
+      const sumLength = response.body.summaries.length;
+      const randNum = Math.floor(Math.random() * (sumLength - 1)) + 1;
+      const currentChamber = response.body.summaries[randNum].currentChamber;
+      let billCongressNum = response.body.summaries[randNum].bill.congress;
+      const originChamber = response.body.summaries[randNum].bill.originChamber;
+      const billTitle = response.body.summaries[randNum].bill.title;
+      const text = response.body.summaries[randNum].text;
+      let actionDate = response.body.summaries[randNum].actionDate;
+      const actionDesc = response.body.summaries[randNum].actionDesc;
+      const msg = `Summary title: ${billTitle}.\nStarted in:${originChamber} on ${actionDate}, currently in ${currentChamber} in Congress ${billCongressNum} and it was ${actionDesc}\n${text}`;
+      msg.replace('<p>', '');
+      twiml.message(msg);
       callback(null, twiml);
     });
   }
