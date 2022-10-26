@@ -1,74 +1,75 @@
-const got = require('got');
-exports.handler = async function(context, event, callback) {
+exports.handler = async (context, event, callback) => {
+  const { request } = await import('undici');
+  const inbMsg = event.Body.toLowerCase().trim();
   const twiml = new Twilio.twiml.MessagingResponse();
-  const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
-  inbMsg = event.Body.toLowerCase().trim();
   if(inbMsg.includes("bill")) {
-    got(`https://api.congress.gov/v3/bill?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(response => {
-      const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
-      billsLength = response.body.bills.length;
-      const latestActionDate = response.body.bills[randNum].latestAction.actionDate;
-      randNum = Math.floor(Math.random() * (billsLength - 1)) + 1;
-      const latestActionTxt = response.body.bills[randNum].latestAction.text;
-      const title = response.body.bills[randNum].title;
-      const congress = response.body.bills[randNum].congress;
-      const type =  response.body.bills[randNum].type;
-      const num = response.body.bills[randNum].number;
-      const originChamber = response.body.bills[randNum].originChamber;
-      const billMap = {
-        HR: "house bill", 
-        S: "senate bill",
-        HJRES: "house joint resolution",
-        SJRES: "senate joint resolution",
-        HCONRES: "house concurrent resolution",
-        SCONRES: "senate concurrent resolution",
-        HRES: "house simple resolution",
-        SRES: "senate simple resolution"
-      };
-      const msg = `Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number: ${num}\nIt originated in the ${originChamber} but the latest action was ${latestActionTxt} on ${latestActionDate}`;
-    //   got(`https://api.congress.gov/v3/bill/${congress}/${type}/${num}/summaries?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(resp => {
-    //     msg += resp.summaries.text;
-    // });
-      twiml.message(msg);
-      callback(null, twiml);
-    }).catch(error => {
-      twiml.message(`${error.response}`);
-      callback(null, twiml);
-    });
+    const {
+      body
+    } = await request(`https://api.congress.gov/v3/bill?api_key=${context.CONGRESS_API_KEY}`);
+    const data = await body.json();
+    const billsLength = data.bills.length;
+    const randNum = Math.floor(Math.random() * (billsLength - 1)) + 1;
+    const latestActionDate = data.bills[randNum].latestAction.actionDate;
+    
+    const latestActionTxt = data.bills[randNum].latestAction.text;
+    const title = data.bills[randNum].title;
+    const congress = data.bills[randNum].congress;
+    const type = data.bills[randNum].type;
+    const num = data.bills[randNum].number;
+    const originChamber = data.bills[randNum].originChamber;
+    const billMap = {
+      HR: "house bill", 
+      S: "senate bill",
+      HJRES: "house joint resolution",
+      SJRES: "senate joint resolution",
+      HCONRES: "house concurrent resolution",
+      SCONRES: "senate concurrent resolution",
+      HRES: "house simple resolution",
+      SRES: "senate simple resolution"
+    };
+    twiml.message(`Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number: ${num}\nIt originated in the ${originChamber} but the latest action was ${latestActionTxt} on ${latestActionDate}`);
   }
   else if(inbMsg.includes("amendment")) {
-    got(`https://api.congress.gov/v3/amendment?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(response => {
-      let amendmentLength = response.body.amendments.length;
-      let randNum = Math.floor(Math.random() * (amendmentLength - 1)) + 1;
-      let latestActionDate = response.body.amendments[randNum].latestAction.actionDate;
-      let latestActionTxt = response.body.amendments[randNum].latestAction.text;
-      let purpose = response.body.amendments[randNum].purpose;
-      let congress = response.body.amendments[randNum].congress;
-      let type =  response.body.amendments[randNum].type;
-      let number = response.body.amendments[randNum].number;
-      twiml.message(`Amendment purpose: ${purpose}.\nAssigned amendment or resolution number:${number}\n Latest action was on ${latestActionDate}.\n The bill was ${latestActionTxt}\n Congress: ${congress}.`);
-      callback(null, twiml);
-    });
+    const {
+      body
+    } = await request(`https://api.congress.gov/v3/amendment?api_key=${context.CONGRESS_API_KEY}`);
+    const data = await body.json();
+    const amendmentLength = data.amendments.length;
+    const randNum = Math.floor(Math.random() * (amendmentLength - 1)) + 1;
+    const latestActionDate = data.amendments[randNum].latestAction.actionDate;
+    const latestActionTxt = data.amendments[randNum].latestAction.text;
+    const purpose = data.amendments[randNum].purpose;
+    const congress = data.amendments[randNum].congress;
+    const type =  data.amendments[randNum].type;
+    const number = data.amendments[randNum].number;
+    twiml.message(`Amendment purpose: ${purpose}\nAssigned amendment or resolution number:${number}\n Latest action was on ${latestActionDate}.\n The bill was ${latestActionTxt}\n Congress: ${congress}.`);
   }
   else if(inbMsg.includes("summaries")) {
-    got(`https://api.congress.gov/v3/summaries/117?api_key=${context.CONGRESS_API_KEY}`, { json: true }).then(response => {
-      const sumLength = response.body.summaries.length;
-      const randNum = Math.floor(Math.random() * (sumLength - 1)) + 1;
-      const currentChamber = response.body.summaries[randNum].currentChamber;
-      let billCongressNum = response.body.summaries[randNum].bill.congress;
-      const originChamber = response.body.summaries[randNum].bill.originChamber;
-      const billTitle = response.body.summaries[randNum].bill.title;
-      const text = response.body.summaries[randNum].text;
-      let actionDate = response.body.summaries[randNum].actionDate;
-      const actionDesc = response.body.summaries[randNum].actionDesc;
-      const msg = `Summary title: ${billTitle}.\nStarted in:${originChamber} on ${actionDate}, currently in ${currentChamber} in Congress ${billCongressNum} and it was ${actionDesc}\n${text}`;
-      msg.replace('<p>', '');
-      twiml.message(msg);
-      callback(null, twiml);
-    });
+    const CURRENT_CONGRESS = 117;
+    const {
+      body
+    } = await request(`https://api.congress.gov/v3/summaries/${CURRENT_CONGRESS}?api_key=${context.CONGRESS_API_KEY}`);
+    const data = await body.json();
+    const sumLength = data.summaries.length;
+    const randNum = Math.floor(Math.random() * (sumLength - 1)) + 1;
+    const currentChamber = data.summaries[randNum].currentChamber;
+    const billCongressNum = data.summaries[randNum].bill.congress;
+    const originChamber = data.summaries[randNum].bill.originChamber;
+    const billTitle = data.summaries[randNum].bill.title;
+    const text = data.summaries[randNum].text;
+    const actionDate = data.summaries[randNum].actionDate;
+    const actionDesc = data.summaries[randNum].actionDesc;
+    let msg = `Summary title: ${billTitle}.\nStarted in:${originChamber} on ${actionDate}, currently in ${currentChamber} in Congress ${billCongressNum} and it was ${actionDesc}\n${text}`;
+    msg.split('<p>', '');
+    msg.split('</p>', '');
+    msg.split('<b>', '');
+    msg.split('</b>', '');
+    msg.split('<strong>', '');
+    msg.split('</strong>', '');
+    twiml.message(msg);
   }
   else {
     twiml.message(`Send "bill", "amendment", or "summaries"`);
-    callback(null, twiml);
   }
+  callback(null, twiml);
 };
