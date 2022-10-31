@@ -22,7 +22,7 @@ exports.handler = async (context, event, callback) => {
         HRES: "house simple resolution",
         SRES: "senate simple resolution"
     };
-    twiml.message(`Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number:   ${number}\nIt originated in the ${originChamber} but the latest action was ${latestAction.text} on ${latestAction.actionDate}`);
+    twiml.message(`Bill: ${title}.\nType: ${billMap[type]}\nAssigned bill or resolution number: ${number}\nIt originated in the ${originChamber} but the latest action was ${latestAction.text} on ${latestAction.actionDate}`);
   }
   else if(inbMsg.includes("amendment")) {
     const {
@@ -44,17 +44,13 @@ exports.handler = async (context, event, callback) => {
     const sumLength = data.summaries.length;
     const randNum = Math.floor(Math.random() * (sumLength - 1)) + 1;
     const summaries = data.summaries[randNum];
-    const { currentChamber, billCongressNum, originChamber, bill } = summaries;
-    //const currentChamber = data.summaries[randNum].currentChamber;
-    //const billCongressNum = data.summaries[randNum].bill.congress;
-    //const originChamber = data.summaries[randNum].bill.originChamber;
-    //const billTitle = data.summaries[randNum].bill.title;
-    let text = data.summaries[randNum].text;
+    const { title, currentChamber, originChamber, bill } = summaries;
+    const text = summaries[randNum].text;
     const regexToStripHtmlTags = /<(.|\n)*?>/g;
     const textWithoutHtmlTags = text.replace(regexToStripHtmlTags, '');
-    const actionDate = data.summaries[randNum].actionDate;
-    const actionDesc = data.summaries[randNum].actionDesc;
-    const msg = `Summary title: ${bill.title}.\nStarted in: ${bill.originChamber} on ${actionDate}, currently in the ${currentChamber} chamber in Congress ${bill.congress} and it was ${actionDesc}\n${textWithoutHtmlTags}`;
+    const actionDate = summaries[randNum].actionDate;
+    const actionDesc = summaries[randNum].actionDesc;
+    const msg = `Summary title: ${title}.\nStarted in: ${originChamber} on ${actionDate}, currently in the ${currentChamber} chamber in Congress ${bill} and it was ${actionDesc}\n${textWithoutHtmlTags}`;
     twiml.message(msg);
   }
   else {
