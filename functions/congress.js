@@ -44,13 +44,10 @@ exports.handler = async (context, event, callback) => {
     const sumLength = data.summaries.length;
     const randNum = Math.floor(Math.random() * (sumLength - 1)) + 1;
     const summaries = data.summaries[randNum];
-    const { title, currentChamber, originChamber, bill } = summaries;
-    const text = summaries[randNum].text;
+    const { bill, currentChamber, text, actionDate, actionDesc } = summaries;
     const regexToStripHtmlTags = /<(.|\n)*?>/g;
     const textWithoutHtmlTags = text.replace(regexToStripHtmlTags, '');
-    const actionDate = summaries[randNum].actionDate;
-    const actionDesc = summaries[randNum].actionDesc;
-    const msg = `Summary title: ${title}.\nStarted in: ${originChamber} on ${actionDate}, currently in the ${currentChamber} chamber in Congress ${bill} and it was ${actionDesc}\n${textWithoutHtmlTags}`;
+    const msg = `Summary title: ${bill.title}.\nStarted in: ${bill.originChamber} on ${actionDate}, currently in the ${currentChamber} chamber in Congress ${bill.congress} and it was ${actionDesc}\n${textWithoutHtmlTags}`; 
     twiml.message(msg);
   }
   else {
